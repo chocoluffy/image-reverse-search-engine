@@ -1,4 +1,5 @@
 all/
 image_captioning/
+others/
 .DS_Store
 *.pyc

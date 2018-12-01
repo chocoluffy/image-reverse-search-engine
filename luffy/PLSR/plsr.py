@@ -1,6 +1,10 @@
 
 import pickle
+import numpy as np
 from sklearn.decomposition import PCA
+import pandas as pd
+from sklearn.cross_decomposition import PLSRegression
+import os.path
 
 train_description_feature_map = pickle.load(open('./features/11_30_[train]_description_normalized_only_>1_vector_py27.pkl', 'rb'))
 test_derscription_feature_map = pickle.load(open('./features/11_30_[test]_description_normalized_only_>1_vector_py27.pkl', 'rb'))
@@ -8,8 +12,13 @@ test_derscription_feature_map = pickle.load(open('./features/11_30_[test]_descri
 train_bow_lst = list(map(lambda x: x["BOW_all_normalized_vector"], train_description_feature_map))
 test_bow_lst = list(map(lambda x: x["BOW_all_normalized_vector"], test_derscription_feature_map))
 
-pca = PCA(n_components=3500)
-pca.fit(train_bow_lst)
+pca_model_name = "./models/pca_bow_all_to_3500.pkl"
+if os.path.exists(pca_model_name):
+    pca = pickle.load(open(pca_model_name, 'rb'))
+else:
+    pca = PCA(n_components=3500)
+    pca.fit(train_bow_lst)
+    pickle.dump(pca, open(pca_model_name, 'wb'), protocol=2)
 
 des_BOW_all_train_pca = pca.transform(train_bow_lst)
 des_BOW_all_test_pca = pca.transform(test_bow_lst)

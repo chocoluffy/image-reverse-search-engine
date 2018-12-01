@@ -5,7 +5,7 @@ import pickle
 import pprint
 
 train_data_feature_map = pickle.load(open('./data/train_data_feature_map.pkl', 'rb'))
-BOW_vector_map = pickle.load(open('./data/BOW_vector_map.pkl', 'rb'))
+BOW_vector_map = pickle.load(open('./data/TRAIN_BOW_vector_map_572.pkl', 'rb'))
 
 # print(train_data_feature_map[0])
 
@@ -27,7 +27,7 @@ print(y.shape)
 from sklearn.ensemble import RandomForestClassifier
 import pickle
 
-clf = RandomForestClassifier(n_estimators=500, max_depth=10, random_state=0)
+clf = RandomForestClassifier(n_estimators=200, max_depth=7, random_state=0)
 clf.fit(X, y)
 pickle.dump(clf, open("random_forest.pkl", 'wb'))
 print("random forest trained")

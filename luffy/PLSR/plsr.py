@@ -12,10 +12,10 @@ Stats:
 - pca: 2048, plsr: 800 score
 """
 
-pca_param = 2048
-plsr_param = 800
-pca_model_name = "./models/pca_bow_all_to_2048.pkl"
-model_name = "./models/pls_800_pool5_to_BOW_all_pca_2048.pkl"
+# pca_param = 2048
+plsr_param = 1000
+# pca_model_name = "./models/pca_bow_all_to_2048.pkl"
+model_name = "./models/pls_1000_pool5_to_BOW_all_pca_5816.pkl"
 
 
 train_description_feature_map = pickle.load(open('./features/11_30_[train]_description_normalized_only_>1_vector_py27.pkl', 'rb'))
@@ -25,17 +25,18 @@ train_bow_lst = list(map(lambda x: x["BOW_all_normalized_vector"], train_descrip
 test_bow_lst = list(map(lambda x: x["BOW_all_normalized_vector"], test_derscription_feature_map))
 
 
-if os.path.exists(pca_model_name):
-    pca = pickle.load(open(pca_model_name, 'rb'))
-else:
-    pca = PCA(n_components=pca_param) # PCA param!
-    pca.fit(train_bow_lst)
-    pickle.dump(pca, open(pca_model_name, 'wb'), protocol=2)
+# if os.path.exists(pca_model_name):
+#     pca = pickle.load(open(pca_model_name, 'rb'))
+# else:
+#     pca = PCA(n_components=pca_param) # PCA param!
+#     pca.fit(train_bow_lst)
+#     pickle.dump(pca, open(pca_model_name, 'wb'), protocol=2)
 
-des_BOW_all_train_pca = pca.transform(train_bow_lst)
-des_BOW_all_test_pca = pca.transform(test_bow_lst)
-
-print des_BOW_all_test_pca.shape
+# des_BOW_all_train_pca = pca.transform(train_bow_lst)
+# des_BOW_all_test_pca = pca.transform(test_bow_lst)
+des_BOW_all_train_pca = train_bow_lst
+des_BOW_all_test_pca = test_bow_lst
+# print des_BOW_all_test_pca.shape
 
 train_img_map = pickle.load(open('./features/12_1_train_img_feature_map_py27.pkl', 'rb'))
 test_img_map = pickle.load(open('./features/12_1_test_img_feature_map_py27.pkl', 'rb'))

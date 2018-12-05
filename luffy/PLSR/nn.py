@@ -53,26 +53,26 @@ def weighted_binary_crossentropy(target, output):
 """
 BOW_all use PCA.
 """
-train_description_feature_map = pickle.load(open('./features/11_30_[train]_description_normalized_only_>1_vector_py27.pkl', 'rb'))
-test_derscription_feature_map = pickle.load(open('./features/11_30_[test]_description_normalized_only_>1_vector_py27.pkl', 'rb'))
+train_description_feature_map = pickle.load(open('./features/12_4_[train]_description_feature_map_py27.pkl', 'rb'))
+test_derscription_feature_map = pickle.load(open('./features/12_4_[test]_description_feature_map_py27.pkl', 'rb'))
 
-train_bow_lst = list(map(lambda x: x["BOW_all_normalized_vector"], train_description_feature_map))
-test_bow_lst = list(map(lambda x: x["BOW_all_normalized_vector"], test_derscription_feature_map))
+description_train_vecs = list(map(lambda x: x["doc_vec"], train_description_feature_map))
+description_test_vecs = list(map(lambda x: x["doc_vec"], test_derscription_feature_map))
 
-train_bow_lst = np.asarray(train_bow_lst)
-test_bow_lst = np.asarray(test_bow_lst)
-print(train_bow_lst.shape)
+description_train_vecs = np.asarray(description_train_vecs)
+description_test_vecs = np.asarray(description_test_vecs)
+print(description_train_vecs.shape)
 
 # pca_model_name = "./models/pca_bow_all_to_512.pkl"
 # if os.path.exists(pca_model_name):
 #     pca = pickle.load(open(pca_model_name, 'rb'))
 # else:
 #     pca = PCA(n_components=512)
-#     pca.fit(train_bow_lst)
+#     pca.fit(description_train_vecs)
 #     pickle.dump(pca, open(pca_model_name, 'wb'), protocol=2)
 
-# des_BOW_all_train_pca = pca.transform(train_bow_lst)
-# des_BOW_all_test_pca = pca.transform(test_bow_lst)
+# des_BOW_all_train_pca = pca.transform(description_train_vecs)
+# des_BOW_all_test_pca = pca.transform(description_test_vecs)
 
 # print(des_BOW_all_test_pca.shape)
 
@@ -92,35 +92,54 @@ input: pool5:2048
 output: BOW_all_pca: 512
 """
 input_size = 2048
-output_size = train_bow_lst.shape[1]
+output_size = description_train_vecs.shape[1]
 
 model = Sequential()
 model.add(Dense(input_dim=input_size, output_dim=2048, activation='relu'))
 model.add(Dropout(0.6))
-model.add(Dense(input_dim=2048, output_dim=2500, activation='relu'))
-model.add(Dropout(0.6))
-model.add(Dense(input_dim=2500, output_dim=3036, activation='relu'))
-model.add(Dropout(0.6))
-model.add(Dense(input_dim=3036, output_dim=4096, activation='relu'))
-model.add(Dropout(0.6))
-model.add(Dense(input_dim=4096, output_dim=output_size, activation='sigmoid'))
+model.add(Dense(input_dim=2048, output_dim=1024, activation='relu'))
+model.add(Dropout(0.4))
+model.add(Dense(input_dim=1024, output_dim=512, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(input_dim=512, output_dim=512, activation='relu'))
+model.add(Dropout(0.2))
+# model.add(Dense(input_dim=4096, output_dim=output_size, activation='sigmoid'))
+model.add(Dense(input_dim=512, output_dim=output_size, activation='linear'))
 
-model.compile(optimizer=Adam(), loss=weighted_binary_crossentropy)
+# model.compile(optimizer=Adam(), loss=weighted_binary_crossentropy)
+model.compile(optimizer=Adam(), loss='mse')
 
-model_checkpoint = ModelCheckpoint('./models/' + 'weights_12_1_epoch_{epoch:02d}.h5', monitor='val_loss', save_best_only=True)
+model_checkpoint = ModelCheckpoint('./models/' + 'weights_12_5_epoch_{epoch:02d}.h5', monitor='val_loss', save_best_only=True)
 
 # model.fit(xt, yt, batch_size=64, nb_epoch=500, validation_data=(xs, ys), class_weight=W, verbose=0)
 
-model.fit(train_pool5_img, train_bow_lst, batch_size=64, nb_epoch=500, verbose=1, shuffle=True,
+model.fit(train_pool5_img, description_train_vecs, batch_size=64, nb_epoch=500, verbose=1, shuffle=True,
             validation_split=0.1,
             callbacks=[model_checkpoint])
 
 preds = model.predict(test_pool5_img)
 
-output_name = "./models/mlp_pool5_to_bow_all_pca_512.pkl"
+output_name = "./models/nn_pool5_to_word2vec_300.pkl"
 pickle.dump(preds, open(output_name, 'wb'), protocol=2)
 
-# preds[preds>=0.5] = 1
-# preds[preds<0.5] = 0
+from scipy.spatial.distance import cdist
+import csv
 
-# print f1_score(ys, preds, average='macro')
+dist = cdist(description_test_vecs, preds, 'cosine')
+print("description * images dist matrix, shape:", dist.shape)
+sorted_id = np.argsort(dist) # dist: N_description * N_images dist matrix.
+
+with open('./NN_pool5_to_word2vec_300.csv', 'w') as csvfile:
+        # write csv header
+        fieldnames = ['Descritpion_ID', "Top_20_Image_IDs"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        for i, row in enumerate(sorted_id):
+            top_choices =  list(map(lambda x: str(x) + ".jpg", row[:20]))
+            res = {}
+            res['Descritpion_ID'] = str(i) + ".txt" # file name
+            res['Top_20_Image_IDs'] = " ".join(top_choices)
+            writer.writerow(res)
+
+print("Writing Complete.")

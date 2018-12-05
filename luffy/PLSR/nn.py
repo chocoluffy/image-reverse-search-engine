@@ -9,7 +9,7 @@ from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers import Input, concatenate, Conv2D, MaxPooling2D, Activation, Conv2DTranspose, UpSampling2D, BatchNormalization
 from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.optimizers import SGD, Adadelta, Adagrad
 from keras.utils import np_utils, generic_utils
 from six.moves import range
@@ -19,9 +19,9 @@ sess = tf.Session(config=config)
 keras.backend.set_session(sess)
 import pickle
 import numpy as np
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
 import pandas as pd
-from sklearn.cross_decomposition import PLSRegression
+# from sklearn.cross_decomposition import PLSRegression
 import os.path
 
 import tensorflow as tf
@@ -61,7 +61,8 @@ description_test_vecs = list(map(lambda x: x["doc_vec"], test_derscription_featu
 
 description_train_vecs = np.asarray(description_train_vecs)
 description_test_vecs = np.asarray(description_test_vecs)
-print(description_train_vecs.shape)
+print description_train_vecs.shape 
+print "Loaded description data..."
 
 # pca_model_name = "./models/pca_bow_all_to_512.pkl"
 # if os.path.exists(pca_model_name):
@@ -84,6 +85,7 @@ test_img_map = pickle.load(open('./features/12_1_test_img_feature_map_py27.pkl',
 
 train_pool5_img = np.asarray(list(map(lambda x: x["POOL_vector"], train_img_map)))
 test_pool5_img = np.asarray(list(map(lambda x: x["POOL_vector"], test_img_map)))
+print "Loaded image data..."
 
 """
 MLP: 
@@ -112,10 +114,13 @@ model.compile(optimizer=Adam(), loss='mse')
 model_checkpoint = ModelCheckpoint('./models/' + 'weights_12_5_epoch_{epoch:02d}.h5', monitor='val_loss', save_best_only=True)
 
 # model.fit(xt, yt, batch_size=64, nb_epoch=500, validation_data=(xs, ys), class_weight=W, verbose=0)
+print "Start Training..."
+#set early stopping monitor so the model stops training when it won't improve anymore
+early_stopping_monitor = EarlyStopping(patience=5)
 
-model.fit(train_pool5_img, description_train_vecs, batch_size=64, nb_epoch=500, verbose=1, shuffle=True,
+model.fit(train_pool5_img, description_train_vecs, batch_size=64, nb_epoch=300, verbose=1, shuffle=True,
             validation_split=0.1,
-            callbacks=[model_checkpoint])
+            callbacks=[model_checkpoint, early_stopping_monitor])
 
 preds = model.predict(test_pool5_img)
 

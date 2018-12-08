@@ -1,6 +1,6 @@
 # Overview
 
-The final competition is hosted at [Kaggle](https://www.kaggle.com/c/cs5785-fall18-final).
+The competition is hosted at [Kaggle](https://www.kaggle.com/c/cs5785-fall18-final).
 
 We finally achieve score of 0.47029 at the public leaderboard, ranked at 1st place at both public and private leaderboard. 
 

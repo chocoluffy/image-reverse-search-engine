@@ -8,7 +8,7 @@ This repo hosts most of our scripts and our final paper report. Hope it helps~
 
 # Useful Tips
 
-for supervised learning for continuous outcome problems (e.g., our this kaggle problem), following techniques are really helpful:
+Ror supervised learning IN continuous outcome problems (e.g., this kaggle problem), following techniques are really helpful:
 
 - linear regression, ridge regression, lasso, elastic net
 - partial least squares regression(PLSR), principal component regression(PCR)
